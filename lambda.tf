@@ -1,35 +1,12 @@
 #
 # create Lambda function
 #
-data "archive_file" "lambda_archive" {
-  source_dir  = "${path.module}/src"
-  output_path = "${path.module}/dist/${var.lambda_name}-package.zip"
-  type        = "zip"
-}
-
-locals {
-  lambda_archive_md5      = filemd5(data.archive_file.lambda_archive.output_path)
-  lambda_package_s3_key   = "lambda/package.zip" # ${var.lambda_name}-
-}
-
-/*
-resource "aws_s3_bucket_object" "upload_lambda_package_to_s3" {
-  bucket            = aws_s3_bucket.lambda_package_bucket.id
-  key               = local.lambda_package_s3_key
-  source            = data.archive_file.lambda_archive.output_path
-  etag              = local.lambda_archive_md5 
-}
-*/
-
 resource "aws_lambda_function" "lambda_function" {
   function_name    = var.lambda_name 
 
   role              = aws_iam_role.lambda_exec_role.arn
   memory_size       = 512
   timeout           = 900
-
-  #handler           = "main.lambda_handler"
-  #runtime           = "python3.7"
 
   package_type      = "Image"
   image_uri         = local.ecr_image_url_2 
@@ -40,19 +17,12 @@ resource "aws_lambda_function" "lambda_function" {
     #command         = [ "main.lambda_handler" ]
   }
 
-  #s3_bucket         = aws_s3_bucket.lambda_package_bucket.id
-  #s3_key            = local.lambda_package_s3_key
-  #source_code_hash  = data.archive_file.lambda_archive.output_base64sha256 
-  # filebase64sha256("./dist/hello.zip")
-
-  #filename         = data.archive_file.lambda_archive.output_path
-  #source_code_hash = data.archive_file.lambda_archive.output_base64sha256
-
-  #depends_on        = [ aws_s3_bucket_object.upload_lambda_package_to_s3 ]
   depends_on        = [ null_resource.docker_build_deploy ]
 
   environment {
     variables = {
+      # setting TF_DATA_DIR to /tmp is important for Terraform to be able  
+      # to write temporary cache files within Lambda runtime environment
       TF_DATA_DIR   = "/tmp"
     }
   }
