@@ -26,6 +26,20 @@
 
 data "aws_caller_identity" "current" {}
 
+data "aws_vpc" "given" {
+  id                      = var.vpc_id
+}
+
+data "aws_subnet" "given" {
+  count                   = length(var.subnet_ids)
+  id                      = var.subnet_ids[count.index]
+}
+
+data "aws_route_table" "subnet_rt" {
+  count                   = length(var.subnet_ids)
+  subnet_id               = var.subnet_ids[count.index]
+}
+
 locals {
   # Common tags to be assigned to all resources
   common_tags             = {
@@ -35,3 +49,4 @@ locals {
 
   account_id              = data.aws_caller_identity.current.account_id
 }
+
