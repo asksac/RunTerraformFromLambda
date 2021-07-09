@@ -42,5 +42,6 @@ override.tf.json
 dist/*
 !dist
 
-$ Ignore tmp folder
+$ Ignore tmp folder/files
 tmp/*
+**/test_response.json
